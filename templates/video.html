@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Low-Light Video Enhancement</title>
+</head>
+<body>
+
+<h2>Upload Low-Light Video</h2>
+
+<form method="POST" enctype="multipart/form-data">
+    <input type="file" name="video" accept="video/*" required>
+    <button type="submit">Enhance Video</button>
+</form>
+
+{% if output_video %}
+<hr>
+<h3>Enhanced Video Output</h3>
+<video width="640" controls>
+  <source src="{{ url_for('static', filename=output_video) }}" type="video/mp4">
+</video>
+
+{% endif %}
+
+</body>
+</html>

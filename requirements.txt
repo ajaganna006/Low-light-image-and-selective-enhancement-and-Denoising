@@ -1,0 +1,15 @@
+numpy
+opencv-python
+Pillow
+matplotlib
+tqdm
+scikit-image==0.26.0rc1
+imageio
+lazy_loader
+tifffile
+
+# ML & DL packages (manual install)
+# torch, torchvision, torchaudio - Install manually if supported
+
+albumentations
+wandb

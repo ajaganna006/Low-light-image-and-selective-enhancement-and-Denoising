@@ -1,0 +1,1986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Low Light Image & Video Enhancement</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        /* ===== MODERN MODE SELECTOR ===== */
+        .mode-wrapper {
+            text-align: center;
+            margin: 40px 0 30px;
+        }
+
+        .mode-heading {
+            font-size: 36px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            background: linear-gradient(90deg, #6c63ff, #00d4ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 25px;
+        }
+
+        .mode-toggle {
+            display: inline-flex;
+            gap: 15px;
+            background: rgba(255,255,255,0.25);
+            padding: 12px;
+            border-radius: 30px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        .mode-card {
+            padding: 14px 28px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: 600;
+            color: #444;
+            background: rgba(255,255,255,0.7);
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+
+        .mode-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+
+        .mode-card.active {
+            color: white;
+            background: linear-gradient(135deg, #6c63ff, #00d4ff);
+            box-shadow: 0 12px 30px rgba(108,99,255,0.45);
+        }
+
+        /* ===== VIDEO UI STYLES ===== */
+        .video-container {
+            display: none;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 30px;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            animation: fadeIn 0.6s ease-in-out;
+        }
+
+        .video-title {
+            text-align: center;
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .video-subtitle {
+            text-align: center;
+            color: #555;
+            margin-bottom: 30px;
+        }
+
+        .upload-box {
+            border: 2px dashed #6c63ff;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            background: rgba(255,255,255,0.4);
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 25px;
+        }
+
+        .control-card {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        .control-card label {
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .control-card input {
+            width: 100%;
+            margin-top: 8px;
+        }
+
+        .enhance-video-btn {
+            margin-top: 30px;
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 15px;
+            background: linear-gradient(135deg, #6c63ff, #00d4ff);
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .enhance-video-btn:hover {
+            transform: scale(1.03);
+        }
+
+        .output-card {
+            margin-top: 40px;
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        .output-card video {
+            width: 100%;
+            border-radius: 12px;
+            margin-top: 15px;
+        }
+
+        .download-btn {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 10px 20px;
+            border-radius: 10px;
+            background: #6c63ff;
+            color: white;
+            text-decoration: none;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        .upload-section {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+        
+        .file-input {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+        
+        .file-input-button {
+            display: inline-block;
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: transform 0.3s ease;
+        }
+        
+        .file-input-button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .method-selection {
+            margin-bottom: 30px;
+        }
+        
+        .method-selection label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .method-options {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .method-option {
+            padding: 10px 20px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+        }
+        
+        .method-option:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+        
+        .method-option.selected {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+        
+        .method-option[data-method="dedunet"] {
+            border-color: #ff6b6b;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+            font-weight: bold;
+        }
+        
+        .method-option[data-method="dedunet"]:hover {
+            border-color: #ff5252;
+            background: linear-gradient(135deg, #ff5252 0%, #d63031 100%);
+        }
+        
+        .method-option[data-method="dedunet"].selected {
+            border-color: #ff5252;
+            background: linear-gradient(135deg, #ff5252 0%, #d63031 100%);
+            color: white;
+        }
+        
+        .method-option[data-method="denoise_comprehensive"] {
+            border-color: #9b59b6;
+            background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+            color: white;
+            font-weight: bold;
+        }
+        
+        .method-option[data-method="denoise_comprehensive"]:hover {
+            border-color: #8e44ad;
+            background: linear-gradient(135deg, #8e44ad 0%, #7d3c98 100%);
+        }
+        
+        .method-option[data-method="denoise_comprehensive"].selected {
+            border-color: #8e44ad;
+            background: linear-gradient(135deg, #8e44ad 0%, #7d3c98 100%);
+            color: white;
+        }
+        
+        .method-option[data-method="smooth_enhance"] {
+            border-color: #3498db;
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+        }
+        
+        .method-option[data-method="smooth_enhance"]:hover {
+            border-color: #2980b9;
+            background: linear-gradient(135deg, #2980b9 0%, #21618c 100%);
+        }
+        
+        .method-option[data-method="smooth_enhance"].selected {
+            border-color: #2980b9;
+            background: linear-gradient(135deg, #2980b9 0%, #21618c 100%);
+            color: white;
+        }
+        
+        .method-option[data-method="denoise_sharpen"] {
+            border-color: #e67e22;
+            background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
+            color: white;
+        }
+        
+        .method-option[data-method="denoise_sharpen"]:hover {
+            border-color: #d35400;
+            background: linear-gradient(135deg, #d35400 0%, #ba4a00 100%);
+        }
+        
+        .method-option[data-method="denoise_sharpen"].selected {
+            border-color: #d35400;
+            background: linear-gradient(135deg, #d35400 0%, #ba4a00 100%);
+            color: white;
+        }
+        
+        .color-filters-section, .color-controls-section {
+            margin-bottom: 30px;
+        }
+
+        .selective-section {
+            margin: 20px 0 30px 0;
+            padding: 15px;
+            background: #f8f9ff;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+        }
+        .selective-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .skin-tone-section {
+            margin: 20px 0 30px 0;
+            padding: 15px;
+            background: #fff8f0;
+            border: 1px solid #ffd700;
+            border-radius: 10px;
+        }
+        
+        .skin-tone-options {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 10px 0;
+        }
+        
+        .skin-tone-option {
+            padding: 8px 16px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .skin-tone-option:hover {
+            border-color: #ffd700;
+            background: #fff8f0;
+        }
+        
+        .skin-tone-option.selected {
+            border-color: #ffd700;
+            background: #ffd700;
+            color: white;
+        }
+        
+        .custom-skin-controls {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .beauty-section {
+            margin: 20px 0 30px 0;
+            padding: 15px;
+            background: #f0f8ff;
+            border: 1px solid #87ceeb;
+            border-radius: 10px;
+        }
+        
+        .beauty-toggle {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        .beauty-sliders {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .quality-section {
+            margin: 20px 0 30px 0;
+            padding: 15px;
+            background: #f0fff0;
+            border: 1px solid #90ee90;
+            border-radius: 10px;
+        }
+        
+        .quality-toggle {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        .quality-options {
+            text-align: center;
+        }
+        .selective-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .color-filters-section label, .color-controls-section label {
+            display: block;
+            margin-bottom: 15px;
+            font-weight: bold;
+            color: #333;
+            font-size: 1.1em;
+        }
+        
+        .color-filter-options {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .color-filter-option {
+            padding: 8px 16px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+            font-size: 0.9em;
+        }
+        
+        .color-filter-option:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+        
+        .color-filter-option.selected {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+        
+        .color-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 15px;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .control-group label {
+            font-weight: bold;
+            color: #555;
+            margin: 0;
+            font-size: 0.9em;
+        }
+        
+        .control-group input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #ddd;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        .control-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .control-group input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .control-value {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 0.9em;
+            min-width: 40px;
+            text-align: center;
+        }
+        
+        .live-preview-section {
+            margin-top: 30px;
+            text-align: center;
+        }
+        
+        .live-preview-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background: #f8f9ff;
+            border-radius: 10px;
+            border: 2px solid #667eea;
+        }
+        
+        .live-preview-toggle input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: #667eea;
+        }
+        
+        .live-preview-toggle label {
+            font-weight: bold;
+            color: #333;
+            margin: 0;
+            cursor: pointer;
+        }
+        
+        .zoom-controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+        }
+        
+        
+        
+        .zoom-controls h4 {
+            margin: 0 0 10px 0;
+            color: #333;
+            font-size: 0.9em;
+        }
+        
+        .zoom-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .zoom-btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            background: #667eea;
+            color: white;
+            cursor: pointer;
+            font-size: 0.8em;
+            transition: background 0.3s ease;
+        }
+        
+        .zoom-btn:hover {
+            background: #5a6fd8;
+        }
+        
+        .image-container {
+            position: relative;
+            overflow: hidden;
+            border-radius: 10px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        
+        .image-container img {
+            max-width: 100%;
+            height: auto;
+            transition: transform 0.3s ease;
+            cursor: grab;
+        }
+        
+        .image-container img:active {
+            cursor: grabbing;
+        }
+        
+        .image-zoom-info {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.8em;
+            display: none;
+        }
+        
+        .auto-enhance-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #28a745;
+            margin-left: 8px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .enhance-button.auto-mode {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+        
+        .rating-section, .quality-metrics {
+            margin: 30px 0;
+            text-align: center;
+        }
+        
+        .rating-section h3, .quality-metrics h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .star-rating {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            margin-bottom: 15px;
+        }
+        
+        .star {
+            font-size: 2em;
+            color: #ddd;
+            cursor: pointer;
+            transition: color 0.2s ease;
+            user-select: none;
+        }
+        
+        .star:hover,
+        .star.active {
+            color: #ffc107;
+        }
+        
+        .star.rated {
+            color: #ffc107;
+        }
+        
+        .rating-feedback {
+            font-style: italic;
+            color: #666;
+            min-height: 20px;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .metric-item {
+            background: #f8f9ff;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .metric-label {
+            display: block;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .metric-value {
+            display: block;
+            font-size: 1.2em;
+            color: #667eea;
+            font-weight: bold;
+        }
+        
+        .method-option input {
+            margin-right: 8px;
+        }
+        
+        .enhance-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 10px;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            margin-bottom: 30px;
+        }
+        
+        .enhance-button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .enhance-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .results {
+            display: none;
+            margin-top: 30px;
+        }
+        
+        .image-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .image-container {
+            text-align: center;
+        }
+        
+        .image-container h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .image-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        .mask-overlay {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            max-width: 100%;
+            height: auto;
+            display: none;
+            mix-blend-mode: screen;
+            pointer-events: none;
+            border-radius: 10px;
+        }
+        
+        .download-section {
+            text-align: center;
+        }
+        
+        .download-button {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            margin: 0 10px;
+        }
+        
+        .download-button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: none;
+        }
+        
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: none;
+        }
+        
+        @media (max-width: 768px) {
+            .image-comparison {
+                grid-template-columns: 1fr;
+            }
+            
+            .method-options {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Mode Selector -->
+    <div class="mode-wrapper">
+        <div class="mode-heading">Select Enhancement Mode</div>
+        <div class="mode-toggle">
+        <div id="imageMode" class="mode-card active" onclick="setMode('image')">
+            🖼 Image
+        </div>
+        <div id="videoMode" class="mode-card" onclick="setMode('video')">
+            🎥 Video
+        </div>
+        </div>
+    </div>
+
+    <!-- Image Zoom Controls -->
+    <div class="zoom-controls">
+        <h4>🔍 Image Zoom</h4>
+        <div class="zoom-buttons">
+            <button class="zoom-btn" onclick="zoomOut()">-</button>
+            <button class="zoom-btn" onclick="resetZoom()">100%</button>
+            <button class="zoom-btn" onclick="zoomIn()">+</button>
+        </div>
+    </div>
+
+
+    <div id="image-section" class="container">
+        <div class="header">
+            <h1>🌙 Low Light Image Enhancement</h1>
+            <p>Transform your dark images into bright, clear photos with advanced AI, denoising, and enhancement techniques</p>
+        </div>
+        
+        <div class="content">
+            <div class="upload-section">
+                <div class="file-input-wrapper">
+                    <input type="file" id="fileInput" class="file-input" accept="image/*">
+                    <label for="fileInput" class="file-input-button">
+                        📁 Choose Image
+                    </label>
+                </div>
+                <p id="fileName" style="margin-top: 10px; color: #666;"></p>
+            </div>
+            
+            <div class="method-selection">
+                <label>🤖 AI Methods:</label>
+                <div class="method-options">
+                    <div class="method-option" data-method="none">
+                        <input type="checkbox" name="methods[]" value="none">
+                        <span>🚫 None (no enhancement)</span>
+                    </div>
+                    <div class="method-option" data-method="dedunet">
+                        <input type="checkbox" name="methods[]" value="dedunet">
+                        <span>🤖 AI Enhancement (DEDUNet)</span>
+                    </div>
+                    <div class="method-option" data-method="mask_guided_ai">
+                        <input type="checkbox" name="methods[]" value="mask_guided_ai">
+                        <span>🧠 Mask-Guided AI</span>
+                    </div>
+                    <div class="method-option selected" data-method="comprehensive">
+                        <input type="checkbox" name="methods[]" value="comprehensive" checked>
+                        <span>🚀 Comprehensive</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="method-selection">
+                <label>🛠️ Manual Methods:</label>
+                <div class="method-options">
+                    <div class="method-option" data-method="manual_brightness">
+                        <input type="checkbox" name="methods[]" value="manual_brightness">
+                        <span>🛠️ Manual Brightness</span>
+                    </div>
+                    <div class="method-option" data-method="brightness">
+                        <input type="checkbox" name="methods[]" value="brightness">
+                        <span>💡 Brightness/Contrast</span>
+                    </div>
+                    <div class="method-option" data-method="gamma">
+                        <input type="checkbox" name="methods[]" value="gamma">
+                        <span>⚡ Gamma Correction</span>
+                    </div>
+                    <div class="method-option" data-method="histogram">
+                        <input type="checkbox" name="methods[]" value="histogram">
+                        <span>📊 Histogram Equalization</span>
+                    </div>
+                    <div class="method-option" data-method="clahe">
+                        <input type="checkbox" name="methods[]" value="clahe">
+                        <span>🎯 CLAHE</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="method-selection">
+                <label>🧪 Advanced Methods:</label>
+                <div class="method-options">
+                    <div class="method-option" data-method="denoise_comprehensive">
+                        <input type="checkbox" name="methods[]" value="denoise_comprehensive">
+                        <span>✨ Advanced Denoising</span>
+                    </div>
+                    <div class="method-option" data-method="smooth_enhance">
+                        <input type="checkbox" name="methods[]" value="smooth_enhance">
+                        <span>🌟 Smooth & Enhance</span>
+                    </div>
+                    <div class="method-option" data-method="denoise_sharpen">
+                        <input type="checkbox" name="methods[]" value="denoise_sharpen">
+                        <span>🔍 Denoise & Sharpen</span>
+                    </div>
+                    <div class="method-option" data-method="bilateral">
+                        <input type="checkbox" name="methods[]" value="bilateral">
+                        <span>🎨 Bilateral Filter</span>
+                    </div>
+                    <div class="method-option" data-method="nlm">
+                        <input type="checkbox" name="methods[]" value="nlm">
+                        <span>🔧 NLM Denoising</span>
+                    </div>
+                    <div class="method-option" data-method="unsharp">
+                        <input type="checkbox" name="methods[]" value="unsharp">
+                        <span>⚡ Unsharp Mask</span>
+                    </div>
+                    <div class="method-option" data-method="selective_dark">
+                        <input type="checkbox" name="methods[]" value="selective_dark">
+                        <span>🧪 Selective Dark</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="color-filters-section">
+                <label>🎨 Color Filters:</label>
+                <div class="color-filter-options">
+                    <div class="color-filter-option" data-filter="none">
+                        <input type="radio" name="color_filter" value="none" checked>
+                        <span>🎯 None</span>
+                    </div>
+                    <div class="color-filter-option" data-filter="vintage">
+                        <input type="radio" name="color_filter" value="vintage">
+                        <span>📸 Vintage</span>
+                    </div>
+                    <div class="color-filter-option" data-filter="warm">
+                        <input type="radio" name="color_filter" value="warm">
+                        <span>🔥 Warm</span>
+                    </div>
+                    <div class="color-filter-option" data-filter="cool">
+                        <input type="radio" name="color_filter" value="cool">
+                        <span>❄️ Cool</span>
+                    </div>
+                    <div class="color-filter-option" data-filter="dramatic">
+                        <input type="radio" name="color_filter" value="dramatic">
+                        <span>🎭 Dramatic</span>
+                    </div>
+                    <div class="color-filter-option" data-filter="soft">
+                        <input type="radio" name="color_filter" value="soft">
+                        <span>🌸 Soft</span>
+                    </div>
+                    <div class="color-filter-option" data-filter="black_white">
+                        <input type="radio" name="color_filter" value="black_white">
+                        <span>⚫ Black & White</span>
+                    </div>
+                    <div class="color-filter-option" data-filter="sepia">
+                        <input type="radio" name="color_filter" value="sepia">
+                        <span>🟤 Sepia</span>
+                    </div>
+                    <div class="color-filter-option" data-filter="high_contrast">
+                        <input type="radio" name="color_filter" value="high_contrast">
+                        <span>⚡ High Contrast</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="color-controls-section">
+                <label>🎛️ Live Color Controls:</label>
+                <div class="color-controls">
+                    <div class="control-group">
+                        <label for="saturation">Saturation:</label>
+                        <input type="range" id="saturation" name="saturation" min="0" max="2" step="0.1" value="1.0">
+                        <span class="control-value">1.0</span>
+                    </div>
+                    <div class="control-group">
+                        <label for="hue_shift">Hue Shift:</label>
+                        <input type="range" id="hue_shift" name="hue_shift" min="-90" max="90" step="1" value="0">
+                        <span class="control-value">0</span>
+                    </div>
+                    <div class="control-group">
+                        <label for="temperature">Temperature:</label>
+                        <input type="range" id="temperature" name="temperature" min="-50" max="50" step="1" value="0">
+                        <span class="control-value">0</span>
+                    </div>
+                    <div class="control-group">
+                        <label for="vibrance">Vibrance:</label>
+                        <input type="range" id="vibrance" name="vibrance" min="-20" max="20" step="1" value="0">
+                        <span class="control-value">0</span>
+                    </div>
+                    <div class="control-group">
+                        <label for="brightness">Brightness:</label>
+                        <input type="range" id="brightness" name="brightness" min="-100" max="100" step="1" value="0">
+                        <span class="control-value">0</span>
+                    </div>
+                    <div class="control-group">
+                        <label for="contrast">Contrast:</label>
+                        <input type="range" id="contrast" name="contrast" min="0.5" max="2.0" step="0.1" value="1.0">
+                        <span class="control-value">1.0</span>
+                    </div>
+                    <div class="control-group">
+                        <label for="exposure">Exposure:</label>
+                        <input type="range" id="exposure" name="exposure" min="-2.0" max="2.0" step="0.1" value="0.0">
+                        <span class="control-value">0.0</span>
+                    </div>
+                    <div class="control-group">
+                        <label for="shadows">Shadows:</label>
+                        <input type="range" id="shadows" name="shadows" min="-100" max="100" step="1" value="0">
+                        <span class="control-value">0</span>
+                    </div>
+                    <div class="control-group">
+                        <label for="highlights">Highlights:</label>
+                        <input type="range" id="highlights" name="highlights" min="-100" max="100" step="1" value="0">
+                        <span class="control-value">0</span>
+                    </div>
+                    <div class="control-group">
+                        <label for="manual_brightness">Manual Brightness:</label>
+                        <input type="range" id="manual_brightness" name="manual_brightness" min="-100" max="100" step="1" value="0">
+                        <span class="control-value">0</span>
+                    </div>
+                    <div class="control-group">
+                        <label for="manual_contrast">Manual Contrast:</label>
+                        <input type="range" id="manual_contrast" name="manual_contrast" min="0.5" max="2.0" step="0.1" value="1.0">
+                        <span class="control-value">1.0</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="live-preview-section">
+                <div class="live-preview-toggle">
+                    <input type="checkbox" id="livePreviewToggle" checked>
+                    <label for="livePreviewToggle">🔄 Live Preview</label>
+                    <span class="auto-enhance-indicator" id="autoEnhanceIndicator"></span>
+                </div>
+                <div style="margin-top:10px; display:flex; gap:12px; justify-content:center; align-items:center; flex-wrap:wrap;">
+                    <label for="rotateSelect" style="font-weight:bold;color:#333;">↻ Rotate:</label>
+                    <select id="rotateSelect" style="padding:6px 10px;border:1px solid #ccc;border-radius:6px;">
+                        <option value="0">0°</option>
+                        <option value="90">90°</option>
+                        <option value="180">180°</option>
+                        <option value="270">270°</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="selective-section">
+                <label style="display:block; text-align:center; font-weight:bold; color:#333; margin-bottom:10px;">🧠 Selective Dark Enhancement Controls</label>
+                <div class="selective-controls">
+                    <div class="control-group" style="min-width:260px;">
+                        <label for="selectiveStrength">Strength (0-2):</label>
+                        <input type="range" id="selectiveStrength" min="0" max="2" step="0.1" value="1.0">
+                        <span class="control-value">1.0</span>
+                    </div>
+                    <div class="control-group" style="min-width:260px;">
+                        <label for="selectiveThreshold">Darkness Threshold (0-1):</label>
+                        <input type="range" id="selectiveThreshold" min="0" max="1" step="0.05" value="0.4">
+                        <span class="control-value">0.4</span>
+                    </div>
+                    <div class="control-group" style="min-width:260px;">
+                        <label for="selectiveSoftness">Mask Softness (0.05-0.6):</label>
+                        <input type="range" id="selectiveSoftness" min="0.05" max="0.6" step="0.05" value="0.2">
+                        <span class="control-value">0.2</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="skin-tone-section">
+                <label style="display:block; text-align:center; font-weight:bold; color:#333; margin-bottom:10px;">🎨 Skin Tone Adjustment</label>
+                <div class="skin-tone-controls">
+                    <div class="skin-tone-presets">
+                        <label>Skin Tone Presets:</label>
+                        <div class="skin-tone-options">
+                            <div class="skin-tone-option" data-tone="none">
+                                <input type="radio" name="skin_tone" value="none" checked>
+                                <span>🎯 None</span>
+                            </div>
+                            <div class="skin-tone-option" data-tone="indian_bright">
+                                <input type="radio" name="skin_tone" value="indian_bright">
+                                <span>🌟 Indian Bright</span>
+                            </div>
+                            <div class="skin-tone-option" data-tone="fair">
+                                <input type="radio" name="skin_tone" value="fair">
+                                <span>✨ Fair</span>
+                            </div>
+                            <div class="skin-tone-option" data-tone="wheatish">
+                                <input type="radio" name="skin_tone" value="wheatish">
+                                <span>🌾 Wheatish</span>
+                            </div>
+                            <div class="skin-tone-option" data-tone="custom">
+                                <input type="radio" name="skin_tone" value="custom">
+                                <span>🎨 Custom</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="custom-skin-controls" id="customSkinControls" style="display:none;">
+                        <div class="control-group">
+                            <label for="skinToneHue">Hue (0-180):</label>
+                            <input type="range" id="skinToneHue" min="0" max="180" step="1" value="90">
+                            <span class="control-value">90</span>
+                        </div>
+                        <div class="control-group">
+                            <label for="skinToneSat">Saturation (0-200):</label>
+                            <input type="range" id="skinToneSat" min="0" max="200" step="1" value="100">
+                            <span class="control-value">100</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="beauty-section">
+                <label style="display:block; text-align:center; font-weight:bold; color:#333; margin-bottom:10px;">💄 Beauty Enhancement</label>
+                <div class="beauty-controls">
+                    <div class="beauty-toggle">
+                        <input type="checkbox" id="beautyEnhance">
+                        <label for="beautyEnhance">Enable Beauty Enhancement</label>
+                    </div>
+                    <div class="beauty-sliders" id="beautySliders" style="display:none;">
+                        <div class="control-group">
+                            <label for="skinSmooth">Skin Smoothing (0-1):</label>
+                            <input type="range" id="skinSmooth" min="0" max="1" step="0.1" value="0.3">
+                            <span class="control-value">0.3</span>
+                        </div>
+                        <div class="control-group">
+                            <label for="eyeBrighten">Eye Brightening (0-1):</label>
+                            <input type="range" id="eyeBrighten" min="0" max="1" step="0.1" value="0.2">
+                            <span class="control-value">0.2</span>
+                        </div>
+                        <div class="control-group">
+                            <label for="lipEnhance">Lip Enhancement (0-1):</label>
+                            <input type="range" id="lipEnhance" min="0" max="1" step="0.1" value="0.3">
+                            <span class="control-value">0.3</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="quality-section">
+                <label style="display:block; text-align:center; font-weight:bold; color:#333; margin-bottom:10px;">📸 High Resolution Enhancement</label>
+                <div class="quality-controls">
+                    <div class="quality-toggle">
+                        <input type="checkbox" id="highResolution">
+                        <label for="highResolution">Enable High Resolution (2x upscaling)</label>
+                    </div>
+                    <div class="quality-options">
+                        <input type="checkbox" id="superResolution" checked>
+                        <label for="superResolution">Super Resolution Enhancement</label>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="text-align: center;">
+                <button id="enhanceButton" class="enhance-button" disabled>
+                    ✨ Enhance Image
+                </button>
+            </div>
+            
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Enhancing your image...</p>
+            </div>
+            
+            <div class="error" id="error"></div>
+            <div class="success" id="success"></div>
+            
+            <div class="results" id="results">
+                <div class="image-comparison">
+                    <div class="image-container">
+                        <h3>Original Image</h3>
+                        <div style="position:relative; display:inline-block;">
+                            <img id="originalImage" src="" alt="Original" onclick="toggleImageZoom(this)">
+                            <img id="maskOverlay" class="mask-overlay" src="" alt="Mask">
+                        </div>
+                        <div class="image-zoom-info" id="originalZoomInfo">100%</div>
+                    </div>
+                    <div class="image-container">
+                        <h3>Enhanced Image</h3>
+                        <img id="enhancedImage" src="" alt="Enhanced" onclick="toggleImageZoom(this)">
+                        <div class="image-zoom-info" id="enhancedZoomInfo">100%</div>
+                    </div>
+                </div>
+                
+                
+                <div class="rating-section">
+                    <h3>⭐ Rate This Enhancement</h3>
+                    <div class="star-rating">
+                        <span class="star" data-rating="1">★</span>
+                        <span class="star" data-rating="2">★</span>
+                        <span class="star" data-rating="3">★</span>
+                        <span class="star" data-rating="4">★</span>
+                        <span class="star" data-rating="5">★</span>
+                    </div>
+                    <div class="rating-feedback" id="ratingFeedback"></div>
+                </div>
+                
+                <div class="quality-metrics">
+                    <h3>📊 Quality Metrics</h3>
+                    <div class="metrics-grid">
+                        <div class="metric-item">
+                            <span class="metric-label">PSNR:</span>
+                            <span class="metric-value" id="psnrValue">--</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">SSIM:</span>
+                            <span class="metric-value" id="ssimValue">--</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Enhancement:</span>
+                            <span class="metric-value" id="enhancementScore">--</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Processing Time:</span>
+                            <span class="metric-value" id="processingTime">--</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="download-section">
+                    <div style="margin-bottom:12px; display:flex; gap:12px; justify-content:center; align-items:center; flex-wrap:wrap;">
+                        <label for="showMask" style="font-weight:bold; color:#333;">🩻 Show Mask</label>
+                        <input type="checkbox" id="showMask">
+                        <label for="maskOpacity" style="font-weight:bold; color:#333;">Opacity</label>
+                        <input type="range" id="maskOpacity" min="0" max="1" step="0.05" value="0.6" style="width:160px;">
+                    </div>
+                    <button class="download-button" onclick="downloadImage('original')">
+                        📥 Download Original
+                    </button>
+                    <button class="download-button" onclick="downloadImage('enhanced')">
+                        📥 Download Enhanced
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="video-section" class="video-container">
+
+        <div class="video-title">🎥 AI Low-Light Video Enhancement</div>
+        <div class="video-subtitle">
+            Selectively enhances dark regions using your trained AI model
+        </div>
+
+        <!-- ================= Upload & Controls ================= -->
+        <form method="POST" action="/video" enctype="multipart/form-data">
+
+            <div class="upload-box">
+                <p><b>Upload Low-Light Video</b></p>
+                <input type="file" name="video" accept="video/*" required>
+            </div>
+
+            <div class="controls-grid">
+                <div class="control-card">
+                    <label>Enhancement Strength</label>
+                    <input type="range" min="0.5" max="2.0" step="0.1"
+                        name="selective_strength" value="1.0">
+                </div>
+
+                <div class="control-card">
+                    <label>Dark Threshold</label>
+                    <input type="range" min="0.1" max="0.8" step="0.05"
+                        name="selective_threshold" value="0.4">
+                </div>
+
+                <div class="control-card">
+                    <label>Mask Softness</label>
+                    <input type="range" min="0.05" max="0.5" step="0.05"
+                        name="selective_softness" value="0.2">
+                </div>
+            </div>
+
+            <button type="submit" class="enhance-video-btn">
+                🚀 Enhance Video
+            </button>
+        </form>
+        {% if original_video and output_video %}
+        <div class="output-card">
+            <h3>🎬 Video Comparison</h3>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:20px;">
+
+                <!-- ORIGINAL -->
+                <div>
+                    <h4 style="text-align:center;">🔴 Original Video</h4>
+                    <video controls autoplay>
+                        <source src="{{ url_for('static', filename=original_video) }}?v={{ metrics.time_taken }}" type="video/mp4">
+                    </video>
+                </div>
+
+                <!-- ENHANCED -->
+                <div>
+                    <h4 style="text-align:center;">✨ Enhanced Video</h4>
+                    <video controls autoplay>
+                        <source src="{{ url_for('static', filename=output_video) }}?v={{ metrics.time_taken }}" type="video/mp4">
+                    </video>
+                </div>
+
+            </div>
+
+            {% if metrics %}
+            <hr style="margin:25px 0;">
+            <h3>📊 Enhancement Metrics</h3>
+            <p><b>⏱ Time Taken:</b> {{ metrics.time_taken }} sec</p>
+            <p><b>🎞 Frames Processed:</b> {{ metrics.frames }}</p>
+            <p><b>⚡ FPS:</b> {{ metrics.fps }}</p>
+            <p><b>📈 PSNR:</b> {{ metrics.avg_psnr }} dB</p>
+            <p><b>🔆 Brightness Gain:</b> {{ metrics.enhancement_gain }} %</p>
+            {% endif %}
+
+            <div style="margin-top:15px; text-align:center;">
+                <a class="download-btn"
+                href="{{ url_for('static', filename=output_video) }}"
+                download>
+                ⬇ Download Enhanced Video
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+
+
+    <script>
+        let currentImages = {};
+        let currentZoom = 1.0;
+        let livePreviewEnabled = true;
+        let autoEnhanceTimeout = null;
+        let isEnhancing = false;
+        
+        // File input handling
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            console.log('File selected:', file ? file.name : 'No file');
+            if (file) {
+                document.getElementById('fileName').textContent = `Selected: ${file.name}`;
+                const button = document.getElementById('enhanceButton');
+                button.disabled = false;
+                console.log('Enhance button enabled, disabled state:', button.disabled);
+                hideMessages();
+            }
+        });
+        
+        // Method selection (multi-select checkboxes)
+        document.querySelectorAll('.method-option').forEach(option => {
+            option.addEventListener('click', function() {
+                const checkbox = this.querySelector('input[type="checkbox"]');
+                if (checkbox) {
+                    checkbox.checked = !checkbox.checked;
+                    if (checkbox.checked) {
+                        this.classList.add('selected');
+                    } else {
+                        this.classList.remove('selected');
+                    }
+                    console.log('Method selected:', checkbox.value, 'checked:', checkbox.checked);
+                } else {
+                    // Fallback for radio buttons
+                    document.querySelectorAll('.method-option').forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                    this.querySelector('input').checked = true;
+                }
+                if (livePreviewEnabled && currentImages.original) autoEnhance();
+            });
+        });
+
+        // Remove old mode selection code - all controls are now always visible
+        
+        // Color filter selection
+        document.querySelectorAll('.color-filter-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.color-filter-option').forEach(opt => opt.classList.remove('selected'));
+                this.classList.add('selected');
+                this.querySelector('input').checked = true;
+                console.log('Color filter selected:', this.querySelector('input').value);
+                if (livePreviewEnabled && currentImages.original) autoEnhance();
+            });
+        });
+        
+        // Live color control updates
+        document.querySelectorAll('input[type="range"]').forEach(slider => {
+            slider.addEventListener('input', function() {
+                const valueSpan = this.parentElement.querySelector('.control-value');
+                valueSpan.textContent = this.value;
+                
+                console.log('Slider changed:', this.id, 'value:', this.value);
+                
+                // Auto-enhance if live preview is enabled
+                if (livePreviewEnabled && currentImages.original) {
+                    autoEnhance();
+                }
+            });
+        });
+        // Rotate change triggers live preview
+        document.getElementById('rotateSelect').addEventListener('change', function(){
+            console.log('Rotation changed to:', this.value);
+            if (livePreviewEnabled && currentImages.original) autoEnhance();
+        });
+
+        // Selective enhancement controls react to changes (no toggle needed)
+        document.getElementById('selectiveStrength').addEventListener('input', function() {
+            this.parentElement.querySelector('.control-value').textContent = this.value;
+            console.log('Selective strength changed:', this.value);
+            if (livePreviewEnabled && currentImages.original) autoEnhance();
+        });
+        document.getElementById('selectiveThreshold').addEventListener('input', function() {
+            this.parentElement.querySelector('.control-value').textContent = this.value;
+            console.log('Selective threshold changed:', this.value);
+            if (livePreviewEnabled && currentImages.original) autoEnhance();
+        });
+        document.getElementById('selectiveSoftness').addEventListener('input', function() {
+            this.parentElement.querySelector('.control-value').textContent = this.value;
+            console.log('Selective softness changed:', this.value);
+            if (livePreviewEnabled && currentImages.original) autoEnhance();
+        });
+        
+        // Skin tone selection
+        document.querySelectorAll('.skin-tone-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.skin-tone-option').forEach(opt => opt.classList.remove('selected'));
+                this.classList.add('selected');
+                this.querySelector('input').checked = true;
+                
+                // Show/hide custom controls
+                const customControls = document.getElementById('customSkinControls');
+                if (this.dataset.tone === 'custom') {
+                    customControls.style.display = 'block';
+                } else {
+                    customControls.style.display = 'none';
+                }
+                
+                console.log('Skin tone selected:', this.querySelector('input').value);
+                if (livePreviewEnabled && currentImages.original) autoEnhance();
+            });
+        });
+        
+        // Custom skin tone controls
+        document.getElementById('skinToneHue').addEventListener('input', function() {
+            this.parentElement.querySelector('.control-value').textContent = this.value;
+            console.log('Skin tone hue changed:', this.value);
+            if (livePreviewEnabled && currentImages.original) autoEnhance();
+        });
+        document.getElementById('skinToneSat').addEventListener('input', function() {
+            this.parentElement.querySelector('.control-value').textContent = this.value;
+            console.log('Skin tone saturation changed:', this.value);
+            if (livePreviewEnabled && currentImages.original) autoEnhance();
+        });
+        
+        // Beauty enhancement toggle
+        document.getElementById('beautyEnhance').addEventListener('change', function() {
+            const beautySliders = document.getElementById('beautySliders');
+            if (this.checked) {
+                beautySliders.style.display = 'flex';
+            } else {
+                beautySliders.style.display = 'none';
+            }
+            console.log('Beauty enhancement toggled:', this.checked);
+            if (livePreviewEnabled && currentImages.original) autoEnhance();
+        });
+        
+        // Beauty enhancement sliders
+        document.getElementById('skinSmooth').addEventListener('input', function() {
+            this.parentElement.querySelector('.control-value').textContent = this.value;
+            console.log('Skin smoothing changed:', this.value);
+            if (livePreviewEnabled && currentImages.original) autoEnhance();
+        });
+        document.getElementById('eyeBrighten').addEventListener('input', function() {
+            this.parentElement.querySelector('.control-value').textContent = this.value;
+            console.log('Eye brightening changed:', this.value);
+            if (livePreviewEnabled && currentImages.original) autoEnhance();
+        });
+        document.getElementById('lipEnhance').addEventListener('input', function() {
+            this.parentElement.querySelector('.control-value').textContent = this.value;
+            console.log('Lip enhancement changed:', this.value);
+            if (livePreviewEnabled && currentImages.original) autoEnhance();
+        });
+        
+        // High resolution toggle
+        document.getElementById('highResolution').addEventListener('change', function() {
+            console.log('High resolution toggled:', this.checked);
+            if (livePreviewEnabled && currentImages.original) autoEnhance();
+        });
+        document.getElementById('superResolution').addEventListener('change', function() {
+            console.log('Super resolution toggled:', this.checked);
+            if (livePreviewEnabled && currentImages.original) autoEnhance();
+        });
+        
+        // Live preview toggle
+        document.getElementById('livePreviewToggle').addEventListener('change', function() {
+            livePreviewEnabled = this.checked;
+            const indicator = document.getElementById('autoEnhanceIndicator');
+            const button = document.getElementById('enhanceButton');
+            
+            console.log('Live preview toggled:', livePreviewEnabled);
+            console.log('Button disabled state:', button.disabled);
+            
+            if (livePreviewEnabled) {
+                indicator.style.display = 'inline-block';
+                button.classList.add('auto-mode');
+                button.textContent = '🔄 Auto Enhance Mode';
+                if (currentImages.original) {
+                    autoEnhance();
+                }
+            } else {
+                indicator.style.display = 'none';
+                button.classList.remove('auto-mode');
+                button.textContent = '✨ Enhance Image';
+            }
+        });
+        
+        
+        // Enhance button
+        document.getElementById('enhanceButton').addEventListener('click', function() {
+            console.log('Enhance button clicked!');
+            console.log('Button disabled:', this.disabled);
+            console.log('isEnhancing:', isEnhancing);
+            console.log('livePreviewEnabled:', livePreviewEnabled);
+            if (this.disabled) {
+                console.log('Button is disabled, cannot proceed');
+                return;
+            }
+            performEnhancement(false);
+        });
+        
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+            const button = document.getElementById('enhanceButton');
+            button.disabled = true;
+            console.log('Manual mode: Button disabled, disabled state:', button.disabled);
+            console.log('Button element:', button);
+        }
+        
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+            const button = document.getElementById('enhanceButton');
+            button.disabled = false;
+            console.log('Manual mode: Button re-enabled, disabled state:', button.disabled);
+            console.log('Button element:', button);
+        }
+        
+        function showResults(original, enhanced) {
+            document.getElementById('originalImage').src = 'data:image/png;base64,' + original;
+            document.getElementById('enhancedImage').src = 'data:image/png;base64,' + enhanced;
+            document.getElementById('results').style.display = 'block';
+            
+        }
+        
+        
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+        
+        function showSuccess(message) {
+            const successDiv = document.getElementById('success');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+        }
+        
+        function hideMessages() {
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('success').style.display = 'none';
+        }
+        
+        function downloadImage(type) {
+            if (!currentImages[type]) {
+                showError('No image to download');
+                return;
+            }
+            
+            const link = document.createElement('a');
+            link.href = 'data:image/png;base64,' + currentImages[type];
+            link.download = `enhanced_image_${type}.png`;
+            link.click();
+        }
+        
+        // Auto-enhance function with debouncing
+        function autoEnhance() {
+            if (isEnhancing) {
+                console.log('Auto-enhance blocked: isEnhancing = true');
+                return;
+            }
+            
+            // Clear previous timeout
+            if (autoEnhanceTimeout) {
+                clearTimeout(autoEnhanceTimeout);
+            }
+            
+            // Debounce the enhancement
+            autoEnhanceTimeout = setTimeout(() => {
+                console.log('Auto-enhance triggered');
+                console.log('Button state before auto-enhance:', document.getElementById('enhanceButton').disabled);
+                performEnhancement(true);
+            }, 300); // 300ms delay
+        }
+        
+        // Perform enhancement (used by both manual and auto)
+        function performEnhancement(isAuto = false) {
+            console.log('performEnhancement called, isAuto:', isAuto);
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                console.log('No file selected');
+                if (!isAuto) showError('Please select an image first');
+                return;
+            }
+            console.log('File found:', file.name);
+            console.log('Button state at start:', document.getElementById('enhanceButton').disabled);
+            
+            // Get selected methods (checkboxes)
+            const selectedMethods = Array.from(document.querySelectorAll('input[name="methods[]"]:checked')).map(cb => cb.value);
+            const method = selectedMethods.length > 0 ? selectedMethods[0] : 'comprehensive';
+            const colorFilter = document.querySelector('input[name="color_filter"]:checked').value;
+            
+            console.log('Selected methods:', selectedMethods);
+            console.log('Color filter:', colorFilter);
+            
+            // Add color filter as a method if not 'none'
+            if (colorFilter !== 'none') {
+                selectedMethods.push(colorFilter);
+            }
+            const rotate = document.getElementById('rotateSelect').value;
+            
+            // Get color adjustment values
+            const saturation = document.getElementById('saturation').value;
+            const hueShift = document.getElementById('hue_shift').value;
+            const temperature = document.getElementById('temperature').value;
+            const vibrance = document.getElementById('vibrance').value;
+            const brightness = document.getElementById('brightness').value;
+            const contrast = document.getElementById('contrast').value;
+            const exposure = document.getElementById('exposure').value;
+            const shadows = document.getElementById('shadows').value;
+            const highlights = document.getElementById('highlights').value;
+            const manualBrightness = document.getElementById('manual_brightness').value;
+            const manualContrast = document.getElementById('manual_contrast').value;
+
+            // Selective enhancement params
+            const selectiveStrength = document.getElementById('selectiveStrength').value;
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            // Add all selected methods
+            selectedMethods.forEach(m => formData.append('methods[]', m));
+            if (rotate !== '0') formData.append('rotate', rotate);
+            
+            console.log('FormData methods:', selectedMethods);
+            
+            // Add color parameters if they're not default values
+            if (saturation !== '1.0') formData.append('saturation', saturation);
+            if (hueShift !== '0') formData.append('hue_shift', hueShift);
+            if (temperature !== '0') formData.append('temperature', temperature);
+            if (vibrance !== '0') formData.append('vibrance', vibrance);
+            if (brightness !== '0') formData.append('brightness', brightness);
+            if (contrast !== '1.0') formData.append('contrast', contrast);
+            if (exposure !== '0.0') formData.append('exposure', exposure);
+            if (shadows !== '0') formData.append('shadows', shadows);
+            if (highlights !== '0') formData.append('highlights', highlights);
+            // Manual controls (activate when method is manual_brightness)
+            if (method === 'manual_brightness') {
+                if (manualBrightness !== '0') formData.append('manual_brightness', manualBrightness);
+                if (manualContrast !== '1.0') formData.append('manual_contrast', manualContrast);
+            }
+
+            // Always add selective dark params (user can control via sliders)
+            const selectiveThreshold = document.getElementById('selectiveThreshold').value;
+            const selectiveSoftness = document.getElementById('selectiveSoftness').value;
+            formData.append('selective_strength', selectiveStrength);
+            formData.append('selective_threshold', selectiveThreshold);
+            formData.append('selective_softness', selectiveSoftness);
+            
+            // Add skin tone parameters
+            const skinTone = document.querySelector('input[name="skin_tone"]:checked').value;
+            formData.append('skin_tone', skinTone);
+            if (skinTone === 'custom') {
+                const skinToneHue = document.getElementById('skinToneHue').value;
+                const skinToneSat = document.getElementById('skinToneSat').value;
+                formData.append('skin_tone_hue', skinToneHue);
+                formData.append('skin_tone_sat', skinToneSat);
+            }
+            
+            // Add beauty enhancement parameters
+            const beautyEnhance = document.getElementById('beautyEnhance').checked;
+            if (beautyEnhance) {
+                formData.append('beauty_enhance', 'true');
+                const skinSmooth = document.getElementById('skinSmooth').value;
+                const eyeBrighten = document.getElementById('eyeBrighten').value;
+                const lipEnhance = document.getElementById('lipEnhance').value;
+                formData.append('skin_smooth', skinSmooth);
+                formData.append('eye_brighten', eyeBrighten);
+                formData.append('lip_enhance', lipEnhance);
+            }
+            
+            // Add high resolution parameters
+            const highResolution = document.getElementById('highResolution').checked;
+            const superResolution = document.getElementById('superResolution').checked;
+            if (highResolution) {
+                formData.append('high_resolution', 'true');
+            }
+            if (superResolution) {
+                formData.append('super_resolution', 'true');
+            }
+            
+            if (!isAuto) {
+                showLoading();
+                hideMessages();
+            } else {
+                // For auto mode, just disable button temporarily
+                const button = document.getElementById('enhanceButton');
+                button.disabled = true;
+                console.log('Auto mode: Button disabled, disabled state:', button.disabled);
+                console.log('Button element:', button);
+            }
+            
+            isEnhancing = true;
+            console.log('About to fetch, button state:', document.getElementById('enhanceButton').disabled);
+            
+            fetch('/enhance', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                isEnhancing = false;
+                console.log('Response received, data.success:', data.success);
+                if (!isAuto) hideLoading();
+                else {
+                    const button = document.getElementById('enhanceButton');
+                    button.disabled = false;
+                    console.log('Auto mode: Button re-enabled, disabled state:', button.disabled);
+                    console.log('Button element:', button);
+                }
+                
+                if (data.success) {
+                    currentImages = {
+                        original: data.original,
+                        enhanced: data.enhanced,
+                        mask: data.mask || null
+                    };
+                    showResults(data.original, data.enhanced);
+                    updateMaskOverlay();
+                    
+                    // Update quality metrics
+                    if (data.metrics) {
+                        updateQualityMetrics(data.metrics);
+                    }
+                    
+                    if (!isAuto) {
+                        let message = `Image enhanced successfully using ${data.method} method!`;
+                        if (colorFilter !== 'none') {
+                            message += ` with ${colorFilter} filter`;
+                        }
+                        if (data.color_params && Object.keys(data.color_params).length > 0) {
+                            message += ` and color adjustments`;
+                        }
+                        showSuccess(message);
+                    }
+                } else {
+                    console.log('Enhancement failed:', data.error);
+                    if (!isAuto) showError(data.error || 'Enhancement failed');
+                }
+            })
+            .catch(error => {
+                isEnhancing = false;
+                if (!isAuto) {
+                    hideLoading();
+                    showError('Network error: ' + error.message);
+                } else {
+                    const button = document.getElementById('enhanceButton');
+                    button.disabled = false;
+                    console.log('Auto mode error: Button re-enabled, disabled state:', button.disabled);
+                    console.log('Button element:', button);
+                }
+            });
+        }
+        
+        // Zoom controls
+        function zoomIn() {
+            currentZoom = Math.min(currentZoom * 1.2, 5.0);
+            applyZoom();
+        }
+        
+        function zoomOut() {
+            currentZoom = Math.max(currentZoom / 1.2, 0.1);
+            applyZoom();
+        }
+        
+        function resetZoom() {
+            currentZoom = 1.0;
+            applyZoom();
+        }
+        
+        function applyZoom() {
+            const images = document.querySelectorAll('.image-container img');
+            images.forEach(img => {
+                img.style.transform = `scale(${currentZoom})`;
+            });
+            
+            // Update zoom info
+            document.querySelectorAll('.image-zoom-info').forEach(info => {
+                info.textContent = Math.round(currentZoom * 100) + '%';
+                info.style.display = currentZoom !== 1.0 ? 'block' : 'none';
+            });
+        }
+        
+        function toggleImageZoom(img) {
+            if (currentZoom === 1.0) {
+                currentZoom = 2.0;
+            } else {
+                currentZoom = 1.0;
+            }
+            applyZoom();
+        }
+        
+        // Rating system
+        let currentRating = 0;
+        
+        document.querySelectorAll('.star').forEach(star => {
+            star.addEventListener('click', function() {
+                const rating = parseInt(this.dataset.rating);
+                setRating(rating);
+            });
+            
+            star.addEventListener('mouseenter', function() {
+                const rating = parseInt(this.dataset.rating);
+                highlightStars(rating);
+            });
+        });
+        
+        document.querySelector('.star-rating').addEventListener('mouseleave', function() {
+            highlightStars(currentRating);
+        });
+        
+        function setRating(rating) {
+            currentRating = rating;
+            highlightStars(rating);
+            updateRatingFeedback(rating);
+        }
+        
+        function highlightStars(rating) {
+            document.querySelectorAll('.star').forEach((star, index) => {
+                if (index < rating) {
+                    star.classList.add('active');
+                } else {
+                    star.classList.remove('active');
+                }
+            });
+        }
+        
+        function updateRatingFeedback(rating) {
+            const feedback = document.getElementById('ratingFeedback');
+            const messages = [
+                '',
+                'Poor - Needs significant improvement',
+                'Fair - Some improvement needed',
+                'Good - Decent enhancement',
+                'Very Good - Great improvement',
+                'Excellent - Outstanding enhancement!'
+            ];
+            feedback.textContent = messages[rating] || '';
+        }
+        
+        // Quality metrics
+        function updateQualityMetrics(metrics) {
+            document.getElementById('psnrValue').textContent = metrics.psnr + ' dB';
+            document.getElementById('ssimValue').textContent = metrics.ssim;
+            document.getElementById('enhancementScore').textContent = metrics.enhancement_score + '%';
+            document.getElementById('processingTime').textContent = metrics.processing_time + ' ms';
+        }
+        
+        // Website zoom controls
+        // Mask overlay controls
+        document.getElementById('showMask').addEventListener('change', updateMaskOverlay);
+        document.getElementById('maskOpacity').addEventListener('input', updateMaskOverlay);
+        function updateMaskOverlay() {
+            const maskImg = document.getElementById('maskOverlay');
+            const show = document.getElementById('showMask').checked;
+            const opacity = document.getElementById('maskOpacity').value;
+            if (show && currentImages.mask) {
+                maskImg.src = 'data:image/png;base64,' + currentImages.mask;
+                maskImg.style.display = 'block';
+                maskImg.style.opacity = opacity;
+            } else {
+                maskImg.style.display = 'none';
+            }
+        }
+        function setMode(mode) {
+            const imageSection = document.getElementById('image-section');
+            const videoSection = document.getElementById('video-section');
+
+            const imageBtn = document.getElementById('imageMode');
+            const videoBtn = document.getElementById('videoMode');
+
+            if (mode === 'image') {
+                imageSection.style.display = 'block';
+                videoSection.style.display = 'none';
+
+                imageBtn.classList.add('active');
+                videoBtn.classList.remove('active');
+            } else {
+                imageSection.style.display = 'none';
+                videoSection.style.display = 'block';
+
+                videoBtn.classList.add('active');
+                imageBtn.classList.remove('active');
+            }
+        }
+    </script>
+</body>
+</html>
