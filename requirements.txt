@@ -9,6 +9,7 @@ lazy_loader
 tifffile
 flask
 torch
+torchvision
 # ML & DL packages (manual install)
 # torch, torchvision, torchaudio - Install manually if supported
 
