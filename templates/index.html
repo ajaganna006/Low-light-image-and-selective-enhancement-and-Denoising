@@ -880,16 +880,6 @@
 </head>
 
 <body>
-    <div style="
-    background:#fff3cd;
-    padding:12px;
-    border-radius:10px;
-    text-align:center;
-    margin-bottom:20px;
-    font-weight:bold;
-">
-⚠️ Demo Mode: This project shows pre-processed results. Full AI model is not deployed due to high GPU and memory requirements.
-</div>
     <!-- Mode Selector -->
     <div class="mode-wrapper">
         <div class="mode-heading">Select Enhancement Mode</div>
@@ -1624,8 +1614,8 @@
         }
         
         function showResults(original, enhanced) {
-            document.getElementById('originalImage').src = 'data:image/png;base64,' + original;
-            document.getElementById('enhancedImage').src = 'data:image/png;base64,' + enhanced;
+        document.getElementById('originalImage').src = original;
+        document.getElementById('enhancedImage').src = enhanced;
             document.getElementById('results').style.display = 'block';
             
         }
