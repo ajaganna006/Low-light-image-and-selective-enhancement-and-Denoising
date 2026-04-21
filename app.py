@@ -1,52 +1,84 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, url_for
 import base64
 import cv2
+import os
 
 app = Flask(__name__)
+
+# ✅ Create folders if not exist (important for deployment)
+os.makedirs("static", exist_ok=True)
 
 @app.route('/')
 def home():
     return render_template('index.html')
 
-# 🔥 THIS IS THE MAIN API YOUR UI CALLS
+
+# 🔥 MAIN IMAGE API
 @app.route('/enhance', methods=['POST'])
 def enhance():
-    file = request.files['file']
+    try:
+        file = request.files.get('file')
 
-    # Save file
-    file_path = "input.jpg"
-    file.save(file_path)
+        if not file:
+            return jsonify({"success": False, "error": "No file uploaded"})
 
-    # 🔥 CALL YOUR MODEL HERE
-    # Replace with your inference logic
-    img = cv2.imread(file_path)
-    enhanced = cv2.convertScaleAbs(img, alpha=1.2, beta=30)
+        file_path = "input.jpg"
+        file.save(file_path)
 
-    # Convert to base64
-    _, buffer1 = cv2.imencode('.png', img)
-    _, buffer2 = cv2.imencode('.png', enhanced)
+        # ✅ Read image
+        img = cv2.imread(file_path)
 
-    original_base64 = base64.b64encode(buffer1).decode('utf-8')
-    enhanced_base64 = base64.b64encode(buffer2).decode('utf-8')
+        if img is None:
+            return jsonify({"success": False, "error": "Invalid image"})
 
-    return jsonify({
-        "success": True,
-        "original": original_base64,
-        "enhanced": enhanced_base64,
-        "method": "demo"
-    })
+        # 🔥 Replace this with YOUR MODEL later
+        enhanced = cv2.convertScaleAbs(img, alpha=1.2, beta=30)
 
-# VIDEO ROUTE
+        # ✅ Convert images to base64
+        _, buffer1 = cv2.imencode('.png', img)
+        _, buffer2 = cv2.imencode('.png', enhanced)
+
+        original_base64 = base64.b64encode(buffer1).decode('utf-8')
+        enhanced_base64 = base64.b64encode(buffer2).decode('utf-8')
+
+        return jsonify({
+            "success": True,
+            "original": original_base64,
+            "enhanced": enhanced_base64,
+            "method": "demo"
+        })
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+
+# 🎥 VIDEO ROUTE
 @app.route('/video', methods=['POST'])
 def video():
-    file = request.files['video']
-    file.save("static/output.mp4")
+    try:
+        file = request.files.get('video')
 
-    return render_template("index.html",
-        original_video="output.mp4",
-        output_video="output.mp4",
-        metrics={"time_taken":1,"frames":100,"fps":24}
-    )
+        if not file:
+            return "No video uploaded", 400
 
+        output_path = "static/output.mp4"
+        file.save(output_path)
+
+        return render_template("index.html",
+            original_video="output.mp4",
+            output_video="output.mp4",
+            metrics={
+                "time_taken": 1,
+                "frames": 100,
+                "fps": 24
+            }
+        )
+
+    except Exception as e:
+        return str(e)
+
+
+# 🔥 VERY IMPORTANT FOR RENDER
 if __name__ == "__main__":
-    app.run()
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
