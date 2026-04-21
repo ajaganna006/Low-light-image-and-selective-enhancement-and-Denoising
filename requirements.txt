@@ -7,7 +7,8 @@ scikit-image==0.26.0rc1
 imageio
 lazy_loader
 tifffile
-
+flask
+torch
 # ML & DL packages (manual install)
 # torch, torchvision, torchaudio - Install manually if supported
 
