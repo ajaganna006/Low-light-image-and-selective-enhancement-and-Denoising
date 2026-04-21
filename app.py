@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, render_template, url_for
 import base64
 import cv2
 import os
+import random
 from inference import inference
 app = Flask(__name__)
 
@@ -14,29 +15,31 @@ def home():
 
 
 # 🔥 MAIN IMAGE API
+
+
 @app.route('/enhance', methods=['POST'])
 def enhance():
     try:
-        file = request.files['file']
+        # Demo image pairs
+        demo_images = [
+            ("input1.jpg", "output1.jpg"),
+            ("input2.jpg", "output2.jpg")
+        ]
 
-        file_path = "input.jpg"
-        output_path = "output.jpg"
+        inp, out = random.choice(demo_images)
 
-        file.save(file_path)
+        # Read demo images
+        with open(f"static/demo/{inp}", "rb") as f:
+            original = base64.b64encode(f.read()).decode()
 
-        # 🔥 CALL YOUR MODEL
-        inference(file_path, output_path)
-
-        img = cv2.imread(file_path)
-        enhanced = cv2.imread(output_path)
-
-        _, buffer1 = cv2.imencode('.png', img)
-        _, buffer2 = cv2.imencode('.png', enhanced)
+        with open(f"static/demo/{out}", "rb") as f:
+            enhanced = base64.b64encode(f.read()).decode()
 
         return jsonify({
             "success": True,
-            "original": base64.b64encode(buffer1).decode('utf-8'),
-            "enhanced": base64.b64encode(buffer2).decode('utf-8')
+            "original": original,
+            "enhanced": enhanced,
+            "method": "Demo Mode"
         })
 
     except Exception as e:
