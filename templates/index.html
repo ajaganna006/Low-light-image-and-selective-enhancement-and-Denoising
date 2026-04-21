@@ -1614,8 +1614,10 @@
         }
         
         function showResults(original, enhanced) {
-        document.getElementById('originalImage').src = original;
-        document.getElementById('enhancedImage').src = enhanced;
+            const baseURL = window.location.origin;
+
+            document.getElementById('originalImage').src = baseURL + original;
+            document.getElementById('enhancedImage').src = baseURL + enhanced;
             document.getElementById('results').style.display = 'block';
             
         }
@@ -1808,9 +1810,11 @@
                 }
                 
                 if (data.success) {
+                    const baseURL = window.location.origin;
+
                     currentImages = {
-                        original: data.original,
-                        enhanced: data.enhanced,
+                        original: baseURL + data.original,
+                        enhanced: baseURL + data.enhanced,
                         mask: data.mask || null
                     };
                     showResults(data.original, data.enhanced);
