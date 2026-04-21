@@ -35,18 +35,12 @@ def enhance():
                 "error": "Demo images missing in static/demo"
             })
 
-        with open(input_path, "rb") as f:
-            original = base64.b64encode(f.read()).decode()
-
-        with open(output_path, "rb") as f:
-            enhanced = base64.b64encode(f.read()).decode()
-
         return jsonify({
-            "success": True,
-            "original": original,
-            "enhanced": enhanced,
-            "method": "Demo Mode"
-        })
+    "success": True,
+    "original": f"/static/demo/{inp}",
+    "enhanced": f"/static/demo/{out}",
+    "method": "Demo Mode"
+})
 
     except Exception as e:
         return jsonify({
