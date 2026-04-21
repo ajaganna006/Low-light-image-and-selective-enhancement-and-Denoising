@@ -16,31 +16,34 @@ def home():
 # 🔥 MAIN IMAGE API
 @app.route('/enhance', methods=['POST'])
 def enhance():
-    file = request.files['file']
+    try:
+        file = request.files['file']
 
-    file_path = "input.jpg"
-    output_path = "output.jpg"
+        file_path = "input.jpg"
+        output_path = "output.jpg"
 
-    file.save(file_path)
+        file.save(file_path)
 
-    # 🔥 CALL YOUR MODEL
-    inference(file_path, output_path)
+        # 🔥 CALL YOUR MODEL
+        inference(file_path, output_path)
 
-    img = cv2.imread(file_path)
-    enhanced = cv2.imread(output_path)
+        img = cv2.imread(file_path)
+        enhanced = cv2.imread(output_path)
 
-    _, buffer1 = cv2.imencode('.png', img)
-    _, buffer2 = cv2.imencode('.png', enhanced)
+        _, buffer1 = cv2.imencode('.png', img)
+        _, buffer2 = cv2.imencode('.png', enhanced)
 
-    return jsonify({
-        "success": True,
-        "original": base64.b64encode(buffer1).decode('utf-8'),
-        "enhanced": base64.b64encode(buffer2).decode('utf-8')
-    })
+        return jsonify({
+            "success": True,
+            "original": base64.b64encode(buffer1).decode('utf-8'),
+            "enhanced": base64.b64encode(buffer2).decode('utf-8')
+        })
 
     except Exception as e:
-        return jsonify({"success": False, "error": str(e)})
-
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        })
 
 # 🎥 VIDEO ROUTE
 @app.route('/video', methods=['POST'])
