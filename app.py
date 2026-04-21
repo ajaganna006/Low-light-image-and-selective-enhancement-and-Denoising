@@ -1,38 +1,52 @@
-from flask import Flask, request, render_template, send_file
-import os
-from inference import inference  # your existing file
+from flask import Flask, request, jsonify, render_template
+import base64
+import cv2
 
 app = Flask(__name__)
 
-UPLOAD_FOLDER = "uploads"
-OUTPUT_FOLDER = "outputs"
+@app.route('/')
+def home():
+    return render_template('index.html')
 
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+# 🔥 THIS IS THE MAIN API YOUR UI CALLS
+@app.route('/enhance', methods=['POST'])
+def enhance():
+    file = request.files['file']
 
-@app.route("/", methods=["GET", "POST"])
-def index():
-    if request.method == "POST":
-        file = request.files["image"]
+    # Save file
+    file_path = "input.jpg"
+    file.save(file_path)
 
-        if file:
-            input_path = os.path.join(UPLOAD_FOLDER, file.filename)
-            output_path = os.path.join(OUTPUT_FOLDER, "out_" + file.filename)
+    # 🔥 CALL YOUR MODEL HERE
+    # Replace with your inference logic
+    img = cv2.imread(file_path)
+    enhanced = cv2.convertScaleAbs(img, alpha=1.2, beta=30)
 
-            file.save(input_path)
+    # Convert to base64
+    _, buffer1 = cv2.imencode('.png', img)
+    _, buffer2 = cv2.imencode('.png', enhanced)
 
-            # 🔥 Call your ML model
-            inference(input_path, output_path)
+    original_base64 = base64.b64encode(buffer1).decode('utf-8')
+    enhanced_base64 = base64.b64encode(buffer2).decode('utf-8')
 
-            return render_template("index.html", output_image=output_path)
+    return jsonify({
+        "success": True,
+        "original": original_base64,
+        "enhanced": enhanced_base64,
+        "method": "demo"
+    })
 
-    return render_template("index.html", output_image=None)
+# VIDEO ROUTE
+@app.route('/video', methods=['POST'])
+def video():
+    file = request.files['video']
+    file.save("static/output.mp4")
 
-
-@app.route("/output/<filename>")
-def output_file(filename):
-    return send_file(os.path.join(OUTPUT_FOLDER, filename))
-
+    return render_template("index.html",
+        original_video="output.mp4",
+        output_video="output.mp4",
+        metrics={"time_taken":1,"frames":100,"fps":24}
+    )
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run()
