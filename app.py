@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify, render_template, url_for
 import base64
 import cv2
 import os
-
+from inference import inference
 app = Flask(__name__)
 
 # ✅ Create folders if not exist (important for deployment)
@@ -16,37 +16,27 @@ def home():
 # 🔥 MAIN IMAGE API
 @app.route('/enhance', methods=['POST'])
 def enhance():
-    try:
-        file = request.files.get('file')
+    file = request.files['file']
 
-        if not file:
-            return jsonify({"success": False, "error": "No file uploaded"})
+    file_path = "input.jpg"
+    output_path = "output.jpg"
 
-        file_path = "input.jpg"
-        file.save(file_path)
+    file.save(file_path)
 
-        # ✅ Read image
-        img = cv2.imread(file_path)
+    # 🔥 CALL YOUR MODEL
+    inference(file_path, output_path)
 
-        if img is None:
-            return jsonify({"success": False, "error": "Invalid image"})
+    img = cv2.imread(file_path)
+    enhanced = cv2.imread(output_path)
 
-        # 🔥 Replace this with YOUR MODEL later
-        enhanced = cv2.convertScaleAbs(img, alpha=1.2, beta=30)
+    _, buffer1 = cv2.imencode('.png', img)
+    _, buffer2 = cv2.imencode('.png', enhanced)
 
-        # ✅ Convert images to base64
-        _, buffer1 = cv2.imencode('.png', img)
-        _, buffer2 = cv2.imencode('.png', enhanced)
-
-        original_base64 = base64.b64encode(buffer1).decode('utf-8')
-        enhanced_base64 = base64.b64encode(buffer2).decode('utf-8')
-
-        return jsonify({
-            "success": True,
-            "original": original_base64,
-            "enhanced": enhanced_base64,
-            "method": "demo"
-        })
+    return jsonify({
+        "success": True,
+        "original": base64.b64encode(buffer1).decode('utf-8'),
+        "enhanced": base64.b64encode(buffer2).decode('utf-8')
+    })
 
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
